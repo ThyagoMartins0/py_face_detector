@@ -19,15 +19,25 @@ while True:
     rgb_small_frame = small_frame[:, :, ::-1]
 
     # Detecta as localizações dos rostos no frame reduzido
-    locais_dos_rostos = face_recognition.face_locations(rgb_small_frame)
+    locais_dos_rostos = face_recognition.face_locations(rgb_small_frame, model="hog")
+
     # Calcula os encodings dos rostos detectados
     encodings_dos_rostos = []
     for face_location in locais_dos_rostos:
-        encodings_dos_rostos.append(face_recognition.face_encodings(rgb_small_frame, [face_location], num_jitters=0)[0])
+        # Se face_location não for uma tupla, converte para (top, right, bottom, left)
+        if not isinstance(face_location, tuple):
+            face_location = (
+                face_location.top(),
+                face_location.right(),
+                face_location.bottom(),
+                face_location.left()
+            )
+        encoding = face_recognition.face_encodings(rgb_small_frame, [face_location], num_jitters=0)[0]
+        encodings_dos_rostos.append(encoding)
 
+    # Compara cada encoding detectado com o encoding conhecido
     nomes = []
     for encoding in encodings_dos_rostos:
-        # Compara o encoding do rosto detectado com o encoding conhecido
         resultados = face_recognition.compare_faces([encoding_conhecido], encoding)
         nome = "Desconhecido"
         if True in resultados:
